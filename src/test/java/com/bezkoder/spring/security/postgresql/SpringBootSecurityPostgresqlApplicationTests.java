@@ -2,9 +2,10 @@ package com.bezkoder.spring.security.postgresql;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-public class SpringBootSecurityPostgresqlApplicationTests {
+public class   SpringBootSecurityPostgresqlApplicationTests {
 
   @Test
   public void contextLoads() {
