@@ -1,36 +1,54 @@
-   name: build & deploy spring app
+name: build & deploy spring app
 
-   on:
-     push:
-       branches:
-         - main
+on:
+  push:
+    branches:
+      - main
 
+jobs:
+  build-deploy:
+    name: build and deploy spring boot project
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15.7
+        env:
+          POSTGRES_DB: testdb
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
-   jobs:
-     build-deploy:
-       name: build and deploy spring boot project
-       runs-on: ubuntu-latest
-       steps:
-         - name: Checkout code
-           uses: actions/checkout@v2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-         - name: Setup JDK 17
-           uses: actions/setup-java@v3
-           with:
-             distribution: 'corretto'
-             java-version: 17
+      - name: Setup JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: 17
 
-         - name: Unit Tests
-           run: mvn -B test --file pom.xml
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..30}; do
+            nc -z localhost 5432 && echo Success && exit 0
+            echo -n .
+            sleep 1
+          done
+          echo Failed waiting for PostgreSQL && exit 1
 
-         - name: Build the application
-           run: |
-             mvn clean
-             mvn -B package --file pom.xml
-           
-          
-          
-           
-         
-        
-           
+      - name: Unit Tests
+        run: mvn -B test --file pom.xml
+
+      - name: Archive Test Reports
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: surefire-reports
+          path: target/surefire-reports
