@@ -55,6 +55,9 @@ jobs:
           cd react-app
           npm run build
 
+      - name: Create static directory
+        run: mkdir -p src/main/resources/static
+
       - name: Copy React build to Spring Boot static directory
         run: |
           cp -r react-app/build/* src/main/resources/static/
