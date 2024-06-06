@@ -31,7 +31,7 @@ jobs:
       - name: Clone React repository
         uses: actions/checkout@v2
         with:
-          repository: gaston0/front-sopra
+          repository: ahmed99-cell/front-end-sopra
           path: react-app
 
       - name: Setup JDK 17
