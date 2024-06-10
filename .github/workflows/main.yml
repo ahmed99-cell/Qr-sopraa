@@ -1,0 +1,109 @@
+name: build & deploy spring and react app
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-deploy:
+    name: build and deploy spring and react project
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15.7
+        env:
+          POSTGRES_DB: sopra-helper
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: admin
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Spring Boot code
+        uses: actions/checkout@v2
+
+      - name: Clone React repository
+        uses: actions/checkout@v2
+        with:
+          repository: ahmed99-cell/front-end-sopra
+          path: react-app
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: 17
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.10.0'
+
+      - name: Install dependencies (React)
+        run: |
+          cd react-app
+          npm install
+
+      - name: Build React app
+        run: |
+          cd react-app
+          npm run build
+
+      - name: Create static directory
+        run: mkdir -p src/main/resources/static
+
+      - name: Copy React build to Spring Boot static directory
+        run: |
+          cp -r react-app/build/* src/main/resources/static/
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..30}; do
+            nc -z localhost 5432 && echo Success && exit 0
+            echo -n .
+            sleep 1
+          done
+          echo Failed waiting for PostgreSQL && exit 1
+
+      - name: Unit Tests (Spring Boot)
+        run: mvn -B test --file pom.xml
+
+      - name: Build the Spring Boot application
+        run: |
+          mvn clean 
+          mvn -B package --file pom.xml
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          dockerfile: Dockerfile
+          push: false
+          tags: ${{secrets.DOCKER_HUB_USERNAME}}/spring-boot-application:latest
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{secrets.DOCKER_HUB_USERNAME}}
+          password: ${{secrets.DOCKER_HUB_ACCESS_TOKEN}}
+
+      - name: Push to Docker Hub
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          dockerfile: Dockerfile
+          push: true
+          tags: ${{secrets.DOCKER_HUB_USERNAME}}/spring-boot-application:latest
+
+      - name: Archive Test Reports
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: surefire-reports
+          path: target/surefire-reports
