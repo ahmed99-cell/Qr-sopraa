@@ -1,7 +1,6 @@
 package com.bezkoder.spring.security.postgresql.service;
 
-import com.bezkoder.spring.security.postgresql.Dto.QuestionDto;
-import com.bezkoder.spring.security.postgresql.Dto.QuestionSearchRequestDto;
+import com.bezkoder.spring.security.postgresql.Dto.*;
 import com.bezkoder.spring.security.postgresql.Exeception.ResourceNotFoundException;
 import com.bezkoder.spring.security.postgresql.models.*;
 import com.bezkoder.spring.security.postgresql.payload.request.AnswerRequest;
@@ -63,7 +62,6 @@ public class QuestionServiceImp implements QuestionService{
                 .collect(Collectors.toList());
     }
 
-    @Override
     public QuestionDto mapToDto(Question question) {
         QuestionDto dto = new QuestionDto();
         dto.setId(question.getId());
@@ -72,6 +70,8 @@ public class QuestionServiceImp implements QuestionService{
         Boolean isUserAnonymous = question.getUserAnonymous();
         if (isUserAnonymous == null || !isUserAnonymous) {
             dto.setUsername(question.getUser().getUsername());
+        } else {
+            dto.setUsername(null);
         }
         dto.setCreatedAt(question.getCreatedAt());
         dto.setUpdatedAt(question.getUpdatedAt());
@@ -126,10 +126,69 @@ public class QuestionServiceImp implements QuestionService{
         question.getTags().add(tag);
         questionRepository.save(question);
     }
+    private GetQuestionByIdDto maptoDto(Question question) {
+        GetQuestionByIdDto dto = new GetQuestionByIdDto();
+        dto.setId(question.getId());
+        dto.setTitle(question.getTitle());
+        dto.setContent(question.getContent());
+        dto.setUsername(question.getUser().getUsername());
+        dto.setCreatedAt(question.getCreatedAt());
+        dto.setUpdatedAt(question.getUpdatedAt());
+dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toSet()));
+        dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toSet()));
+
+        dto.setAnswers(question.getAnswers().stream().map(this::mapAnswerToDto).collect(Collectors.toList()));
+        dto.setVotes(question.getVotes().stream().map(this::mapVoteToDto).collect(Collectors.toList()));
+        dto.setFavorites(question.getFavorites().stream().map(this::mapFavoriteToDto).collect(Collectors.toList()));
+        return dto;
+
+
+    }
+    @Override
+    public AnswerDto mapAnswerToDto(Answer answer) {
+        AnswerDto dto = new AnswerDto();
+        dto.setId(answer.getId());
+        dto.setContent(answer.getContent());
+        dto.setUsername(answer.getUser().getUsername());
+        dto.setCreatedAt(answer.getCreatedAt().toString());
+        dto.setUpdatedAt(answer.getUpdatedAt() != null ? answer.getUpdatedAt().toString() : null);
+        dto.setResponses(answer.getResponses().stream().map(AnswerResponse::getContent).collect(Collectors.toList()));
+
+        dto.setVotes(answer.getVotes().stream().map(Vote::toString).collect(Collectors.toList()));
+        dto.setFavorites(answer.getFavorites().stream().map(Favorite::toString).collect(Collectors.toList()));
+        return dto;
+    }
+    @Override
+    public AnswerResponseDto mapToAnswerResponseDto(AnswerResponse answerResponse) {
+        AnswerResponseDto dto = new AnswerResponseDto();
+        dto.setId(answerResponse.getId());
+        dto.setContent(answerResponse.getContent());
+        dto.setUsername(answerResponse.getUser().getUsername());
+        dto.setCreatedAt(answerResponse.getCreatedAt().toString());
+        dto.setUpdatedAt(answerResponse.getUpdatedAt() != null ? answerResponse.getUpdatedAt().toString() : null);
+        dto.setVotes(answerResponse.getVotes().stream().map(Vote::toString).collect(Collectors.toList()));
+        dto.setFavorites(answerResponse.getFavorites().stream().map(Favorite::toString).collect(Collectors.toList()));
+        return dto;
+    }
+
+    private VoteDto mapVoteToDto(Vote vote) {
+        VoteDto dto = new VoteDto();
+        dto.setId(vote.getId());
+        dto.setUsername(vote.getUser().getUsername());
+        dto.setValue(vote.getValue());
+        return dto;
+    }
+
+    private FavoriteDto mapFavoriteToDto(Favorite favorite) {
+        FavoriteDto dto = new FavoriteDto();
+        dto.setId(favorite.getId());
+        dto.setUsername(favorite.getUser().getUsername());
+        return dto;
+    }
 
     @Override
-    public Optional<Question> getQuestionById(Long id) {
-        return questionRepository.findById(id);
+    public Optional<GetQuestionByIdDto> getQuestionById(Long id) {
+        return questionRepository.findById(id).map(this::maptoDto);
     }
 
 
@@ -183,8 +242,11 @@ public class QuestionServiceImp implements QuestionService{
     }
 
     @Override
-    public List<Answer> getAnswersByQuestionId(Long questionId) {
-        return answerRepository.findByQuestionId(questionId);
+    public List<AnswerDto> getAnswersByQuestionId(Long questionId) {
+        List<Answer> answers = answerRepository.findByQuestionId(questionId);
+        return answers.stream()
+                .map(this::mapAnswerToDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -254,7 +316,7 @@ public class QuestionServiceImp implements QuestionService{
 
 
     @Override
-    public List<AnswerResponse> getResponsesToAnswer(Long questionId, Long answerId) {
+    public List<AnswerResponseDto> getResponsesToAnswer(Long questionId, Long answerId) {
         Answer answer = answerRepository.findById(answerId)
                 .orElseThrow(() -> new RuntimeException("Answer not found"));
 
@@ -263,7 +325,9 @@ public class QuestionServiceImp implements QuestionService{
         }
 
         Set<AnswerResponse> responses = answer.getResponses();
-        return new ArrayList<>(responses);
+        return responses.stream()
+                .map(this::mapToAnswerResponseDto)
+                .collect(Collectors.toList());
     }
 
     @Override

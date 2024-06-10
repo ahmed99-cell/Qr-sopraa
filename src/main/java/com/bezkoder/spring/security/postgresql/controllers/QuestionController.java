@@ -1,7 +1,6 @@
 package com.bezkoder.spring.security.postgresql.controllers;
 
-import com.bezkoder.spring.security.postgresql.Dto.QuestionDto;
-import com.bezkoder.spring.security.postgresql.Dto.QuestionSearchRequestDto;
+import com.bezkoder.spring.security.postgresql.Dto.*;
 import com.bezkoder.spring.security.postgresql.models.*;
 import com.bezkoder.spring.security.postgresql.payload.request.AnswerRequest;
 import com.bezkoder.spring.security.postgresql.payload.request.QuestionRequest;
@@ -19,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/questions")
@@ -46,24 +46,7 @@ public class QuestionController {
 
         return ResponseEntity.ok(new MessageResponse("Question created and associated with tag successfully!"));
     }
-    @GetMapping("/files/{id}")
-    public ResponseEntity<byte[]> getFile(@PathVariable Long id) {
-        Question question = questionService.getQuestionById(id)
-                .orElseThrow(() -> new RuntimeException("Question not found"));
 
-        String fileName = question.getTitle();
-        byte[] fileContent = question.getFile();
-
-        MediaType mediaType = getMediaTypeForFileName(fileName);
-        if (mediaType == null) {
-            throw new RuntimeException("Unsupported file type");
-        }
-
-        return ResponseEntity.ok()
-                .contentType(mediaType)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
-                .body(fileContent);
-    }
 
     private MediaType getMediaTypeForFileName(String fileName) {
         if (fileName.endsWith(".pdf")) {
@@ -78,10 +61,10 @@ public class QuestionController {
     }
 
     @GetMapping("/{questionId}")
-    public ResponseEntity<Question> getQuestionById(@PathVariable Long questionId) {
-        Question question = questionService.getQuestionById(questionId)
+    public ResponseEntity<GetQuestionByIdDto> getQuestionById(@PathVariable Long questionId) {
+        GetQuestionByIdDto questionDto = questionService.getQuestionById(questionId)
                 .orElseThrow(() -> new RuntimeException("Question not found"));
-        return ResponseEntity.ok().body(question);
+        return ResponseEntity.ok().body(questionDto);
     }
     @PutMapping("/{questionId}")
     public ResponseEntity<?> updateQuestion(@PathVariable Long questionId, @Valid @RequestBody QuestionRequest questionRequest) {
@@ -112,7 +95,7 @@ public class QuestionController {
 
 
     @GetMapping("/{questionId}/answers")
-    public List<Answer> getAnswersByQuestionId(@PathVariable Long questionId) {
+    public List<AnswerDto> getAnswersByQuestionId(@PathVariable Long questionId) {
         return questionService.getAnswersByQuestionId(questionId);
     }
     @PostMapping("/{questionId}/answers")
@@ -128,9 +111,10 @@ public class QuestionController {
         return ResponseEntity.ok(new MessageResponse("Response to Answer created successfully!"));
     }
 
+
     @GetMapping("/{questionId}/answers/{answerId}/responses")
-    public ResponseEntity<List<AnswerResponse>> getResponsesToAnswer(@PathVariable Long questionId, @PathVariable Long answerId) {
-        List<AnswerResponse> responses = questionService.getResponsesToAnswer(questionId, answerId);
+    public ResponseEntity<List<AnswerResponseDto>> getResponsesToAnswer(@PathVariable Long questionId, @PathVariable Long answerId) {
+        List<AnswerResponseDto> responses = questionService.getResponsesToAnswer(questionId, answerId);
         return ResponseEntity.ok().body(responses);
     }
     @PutMapping("/{questionId}/answers/{parentAnswerId}/responses/{responseId}")

@@ -1,7 +1,6 @@
 package com.bezkoder.spring.security.postgresql.service;
 
-import com.bezkoder.spring.security.postgresql.Dto.QuestionDto;
-import com.bezkoder.spring.security.postgresql.Dto.QuestionSearchRequestDto;
+import com.bezkoder.spring.security.postgresql.Dto.*;
 import com.bezkoder.spring.security.postgresql.models.Answer;
 import com.bezkoder.spring.security.postgresql.models.AnswerResponse;
 import com.bezkoder.spring.security.postgresql.models.Question;
@@ -19,16 +18,24 @@ public interface QuestionService {
      QuestionDto mapToDto(Question question);
     public Question createQuestion(QuestionRequest questionRequest, String username, MultipartFile file, Long tagId, Boolean isUserAnonymous) ;
      void associateTagWithQuestion(Long questionId, Long tagId);
-    Optional<Question> getQuestionById(Long id);
+
+    public Optional<GetQuestionByIdDto> getQuestionById(Long id);
+    List<AnswerDto> getAnswersByQuestionId(Long questionId);
+    List<AnswerResponseDto> getResponsesToAnswer(Long questionId, Long answerId);
+    AnswerResponseDto mapToAnswerResponseDto(AnswerResponse answerResponse);
+
+
+    AnswerDto mapAnswerToDto(Answer answer);
+
+
     Question updateQuestion(Long questionId, QuestionRequest questionRequest);
     void deleteQuestion(Long questionId);
     Answer getAnswerById(Long questionId, Long answerId);
     Answer updateAnswer(Long questionId, Long answerId, AnswerRequest answerRequest);
     void deleteAnswer(Long questionId, Long answerId);
-    List<Answer> getAnswersByQuestionId(Long questionId);
+
     Answer createAnswer(Long questionId, AnswerRequest answerRequest, String username);
     AnswerResponse createResponseToAnswer(Long questionId, Long parentAnswerId, AnswerRequest answerRequest, String username);
-    List<AnswerResponse> getResponsesToAnswer(Long questionId, Long answerId);
     AnswerResponse updateResponseToAnswer(Long questionId, Long parentAnswerId, Long responseId, AnswerRequest answerRequest, String username);
     void deleteResponseToAnswer(Long questionId, Long parentAnswerId, Long responseId, String username);
      void associateTagWithQuestion(Long questionId, Tag tag);
