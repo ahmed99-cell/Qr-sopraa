@@ -22,6 +22,7 @@ public interface QuestionService {
     public Optional<GetQuestionByIdDto> getQuestionById(Long id);
     List<AnswerDto> getAnswersByQuestionId(Long questionId);
     List<AnswerResponseDto> getResponsesToAnswer(Long questionId, Long answerId);
+    UserActivity getUserActivity();
     AnswerResponseDto mapToAnswerResponseDto(AnswerResponse answerResponse);
 
 

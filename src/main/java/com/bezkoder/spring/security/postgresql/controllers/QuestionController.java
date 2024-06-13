@@ -123,6 +123,12 @@ public class QuestionController {
         AnswerResponse response = questionService.updateResponseToAnswer(questionId, parentAnswerId, responseId, answerRequest, username);
         return ResponseEntity.ok(new MessageResponse("Response to Answer updated successfully!"));
     }
+
+    @GetMapping("/user/activity")
+    public ResponseEntity<UserActivity> getUserActivity() {
+        UserActivity userActivity = questionService.getUserActivity();
+        return ResponseEntity.ok(userActivity);
+    }
     @DeleteMapping("/{questionId}/answers/{parentAnswerId}/responses/{responseId}")
     public ResponseEntity<?> deleteResponseToAnswer(@PathVariable Long questionId, @PathVariable Long parentAnswerId, @PathVariable Long responseId, @AuthenticationPrincipal UserDetails userDetails) {
         String username = userDetails.getUsername();

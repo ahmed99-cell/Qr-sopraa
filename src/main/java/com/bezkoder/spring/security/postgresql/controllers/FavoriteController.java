@@ -1,5 +1,6 @@
 package com.bezkoder.spring.security.postgresql.controllers;
 
+import com.bezkoder.spring.security.postgresql.Dto.FavoriteDto;
 import com.bezkoder.spring.security.postgresql.models.Favorite;
 import com.bezkoder.spring.security.postgresql.service.FavoriteServiceImp;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/favorites")
@@ -14,6 +16,14 @@ import java.util.List;
 public class FavoriteController {
 @Autowired
 private FavoriteServiceImp favoriteService;
+    @GetMapping("/favoritesForCurrentUser")
+    public ResponseEntity<List<FavoriteDto>> getFavoritesForCurrentUser() {
+        List<Favorite> favorites = favoriteService.getFavoritesForCurrentUser();
+        List<FavoriteDto> favoriteDtos = favorites.stream()
+                .map(favoriteService::mapFavoriteToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok().body(favoriteDtos);
+    }
     @GetMapping
     public ResponseEntity<List<Favorite>> getAllFavorites() {
         return ResponseEntity.ok(favoriteService.getAllFavorites());

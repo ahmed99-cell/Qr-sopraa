@@ -13,6 +13,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
@@ -135,6 +137,8 @@ public class QuestionServiceImp implements QuestionService{
         dto.setCreatedAt(question.getCreatedAt());
         dto.setUpdatedAt(question.getUpdatedAt());
 dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toSet()));
+        dto.setFile(question.getFile()); // Ajoutez cette ligne
+        dto.setContentType(question.getContentType());
         dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toSet()));
 
         dto.setAnswers(question.getAnswers().stream().map(this::mapAnswerToDto).collect(Collectors.toList()));
@@ -328,6 +332,40 @@ dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toS
         return responses.stream()
                 .map(this::mapToAnswerResponseDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public UserActivity getUserActivity() {
+        // Récupérer l'utilisateur connecté
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (principal instanceof UserDetails) {
+            String username = ((UserDetails)principal).getUsername();
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Récupérer les questions, réponses et réponses aux réponses de l'utilisateur
+            List<Question> questions = new ArrayList<>(user.getQuestions());
+            List<Answer> answers = new ArrayList<>(user.getAnswers());
+            List<AnswerResponse> answerResponses = answerResponseRepository.findByUser(user); // Fetch AnswerResponse objects for the user
+
+            // Convertir les objets en objets DTO
+            List<QuestionDto> questionDtos = questions.stream().map(this::mapToDto).collect(Collectors.toList());
+            List<AnswerDto> answerDtos = answers.stream().map(this::mapAnswerToDto).collect(Collectors.toList());
+            List<AnswerResponseDto> answerResponseDtos = answerResponses.stream().map(this::mapToAnswerResponseDto).collect(Collectors.toList());
+
+            // Créer un UserActivity qui contient ces informations
+            UserActivity userActivity = new UserActivity();
+            userActivity.setQuestions(questionDtos);
+            userActivity.setAnswers(answerDtos);
+            userActivity.setAnswerResponses(answerResponseDtos);
+
+            // Retourner le UserActivity
+            return userActivity;
+        }
+
+        throw new RuntimeException("User not authenticated");
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.bezkoder.spring.security.postgresql.service;
 
+import com.bezkoder.spring.security.postgresql.Dto.FavoriteDto;
 import com.bezkoder.spring.security.postgresql.models.*;
 import com.bezkoder.spring.security.postgresql.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,6 +93,13 @@ public class FavoriteServiceImp implements FavoriteService{
         }
     }
 
+    public FavoriteDto mapFavoriteToDto(Favorite favorite) {
+        FavoriteDto dto = new FavoriteDto();
+        dto.setId(favorite.getId());
+        dto.setUsername(favorite.getUser().getUsername());
+        return dto;
+    }
+
     @Override
     public Favorite markAnswerResponseAsFavorite(Long answerResponseId) {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -111,4 +119,21 @@ public class FavoriteServiceImp implements FavoriteService{
             throw new RuntimeException("Utilisateur non connecté");
         }
     }
+
+    @Override
+    public List<Favorite> getFavoritesForCurrentUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (principal instanceof UserDetails) {
+            String username = ((UserDetails)principal).getUsername();
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            List<Favorite> favorites = user.getFavorites();
+
+            return favorites;
+        }
+
+        throw new RuntimeException("User not authenticated");
+}
 }

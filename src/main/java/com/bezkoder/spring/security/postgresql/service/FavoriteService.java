@@ -1,5 +1,6 @@
 package com.bezkoder.spring.security.postgresql.service;
 
+import com.bezkoder.spring.security.postgresql.Dto.FavoriteDto;
 import com.bezkoder.spring.security.postgresql.models.Favorite;
 
 import java.util.List;
@@ -12,6 +13,8 @@ public interface FavoriteService {
     Favorite markQuestionAsFavorite( Long questionId);
     Favorite markAnswerAsFavorite( Long answerId);
     Favorite markAnswerResponseAsFavorite( Long answerResponseId);
+    List<Favorite> getFavoritesForCurrentUser();
+
 
 
 }
