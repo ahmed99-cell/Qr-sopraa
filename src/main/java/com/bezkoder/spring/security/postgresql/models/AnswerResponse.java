@@ -18,9 +18,30 @@ public class AnswerResponse {
     @NotBlank
     @Column(columnDefinition = "TEXT")
     private String content;
+    @Column(name = "file")
+    private byte[] file;
+
+    public byte[] getFile() {
+        return file;
+    }
+
+    public void setFile(byte[] file) {
+        this.file = file;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    @Column(name = "content_type")
+    private String contentType;
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     @JsonIgnore
     private User user;

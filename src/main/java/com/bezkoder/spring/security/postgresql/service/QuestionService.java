@@ -35,8 +35,8 @@ public interface QuestionService {
     Answer updateAnswer(Long questionId, Long answerId, AnswerRequest answerRequest);
     void deleteAnswer(Long questionId, Long answerId);
 
-    Answer createAnswer(Long questionId, AnswerRequest answerRequest, String username);
-    AnswerResponse createResponseToAnswer(Long questionId, Long parentAnswerId, AnswerRequest answerRequest, String username);
+    Answer createAnswer(Long questionId, AnswerRequest answerRequest, String username,MultipartFile file);
+    AnswerResponse createResponseToAnswer(Long questionId, Long parentAnswerId, AnswerRequest answerRequest, String username,MultipartFile file);
     AnswerResponse updateResponseToAnswer(Long questionId, Long parentAnswerId, Long responseId, AnswerRequest answerRequest, String username);
     void deleteResponseToAnswer(Long questionId, Long parentAnswerId, Long responseId, String username);
      void associateTagWithQuestion(Long questionId, Tag tag);

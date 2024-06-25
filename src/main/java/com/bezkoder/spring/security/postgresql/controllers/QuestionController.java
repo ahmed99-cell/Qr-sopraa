@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -98,16 +99,16 @@ public class QuestionController {
     public List<AnswerDto> getAnswersByQuestionId(@PathVariable Long questionId) {
         return questionService.getAnswersByQuestionId(questionId);
     }
-    @PostMapping("/{questionId}/answers")
-    public ResponseEntity<?> createAnswer(@PathVariable Long questionId, @Valid @RequestBody AnswerRequest answerRequest, @AuthenticationPrincipal UserDetails userDetails) {
+    @PostMapping(value = "/{questionId}/answers", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> createAnswer(@PathVariable Long questionId, @Valid @ModelAttribute AnswerRequestWrapper answerRequestWrapper, @AuthenticationPrincipal UserDetails userDetails) {
         String username = userDetails.getUsername();
-        Answer answer = questionService.createAnswer(questionId, answerRequest, username);
+        Answer answer = questionService.createAnswer(questionId, answerRequestWrapper.getAnswerRequest(), username, answerRequestWrapper.getFile());
         return ResponseEntity.ok(new MessageResponse("Answer created successfully!"));
     }
-    @PostMapping("/{questionId}/answers/{parentAnswerId}/responses")
-    public ResponseEntity<?> createResponseToAnswer(@PathVariable Long questionId, @PathVariable Long parentAnswerId, @Valid @RequestBody AnswerRequest answerRequest, @AuthenticationPrincipal UserDetails userDetails) {
+    @PostMapping(value = "/{questionId}/answers/{parentAnswerId}/responses", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> createResponseToAnswer(@PathVariable Long questionId, @PathVariable Long parentAnswerId, @Valid @ModelAttribute AnswerRequestWrapper answerRequestWrapper, @AuthenticationPrincipal UserDetails userDetails) {
         String username = userDetails.getUsername();
-        AnswerResponse answer = questionService.createResponseToAnswer(questionId, parentAnswerId, answerRequest, username);
+        AnswerResponse answer = questionService.createResponseToAnswer(questionId, parentAnswerId, answerRequestWrapper.getAnswerRequest(), username, answerRequestWrapper.getFile());
         return ResponseEntity.ok(new MessageResponse("Response to Answer created successfully!"));
     }
 

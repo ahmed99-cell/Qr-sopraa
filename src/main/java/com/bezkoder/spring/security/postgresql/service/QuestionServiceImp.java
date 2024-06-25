@@ -7,6 +7,7 @@ import com.bezkoder.spring.security.postgresql.payload.request.AnswerRequest;
 import com.bezkoder.spring.security.postgresql.payload.request.QuestionRequest;
 import com.bezkoder.spring.security.postgresql.payload.response.MessageResponse;
 import com.bezkoder.spring.security.postgresql.repository.*;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -254,14 +255,34 @@ dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toS
     }
 
     @Override
-    public Answer createAnswer(Long questionId, AnswerRequest answerRequest, String username) {
+    public Answer createAnswer(Long questionId, AnswerRequest answerRequest, String username,MultipartFile file) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
         Question question = questionRepository.findById(questionId).orElseThrow(() -> new RuntimeException("Question not found"));
+        Hibernate.initialize(question.getUser());
+        String questionCreatorEmail = question.getUser().getEmail();
         Answer answer = new Answer();
         answer.setContent(answerRequest.getContent());
         answer.setUser(user);
         answer.setQuestion(question);
+
+
         answer.setCreatedAt(new Date());
+        if (file != null) {
+
+            String contentType = file.getContentType();
+
+            if (!contentType.equals("image/jpeg") && !contentType.equals("application/pdf") && !contentType.equals("text/csv")) {
+                throw new RuntimeException("Unsupported file type");
+            }
+
+            try {
+                answer.setFile(file.getBytes());
+                answer.setContentType(file.getContentType());
+            } catch (IOException e) {
+                throw new RuntimeException("Error reading file", e);
+            }
+        }
+
         Answer savedAnswer = answerRepository.save(answer);
 
         Notification notification = new Notification();
@@ -271,19 +292,23 @@ dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toS
         notification.setCreatedAt(LocalDateTime.now());
 
         notificationRepository.save(notification);
-        sendNotificationEmail(question.getUser(), "Une nouvelle réponse a été ajoutée à votre question");
+        sendNotificationEmail(questionCreatorEmail, "Une nouvelle réponse a été ajoutée à votre question");
 
 
         return savedAnswer;
     }
 
     @Override
-    public AnswerResponse createResponseToAnswer(Long questionId, Long parentAnswerId, AnswerRequest answerRequest, String username) {
+    public AnswerResponse createResponseToAnswer(Long questionId, Long parentAnswerId, AnswerRequest answerRequest, String username,MultipartFile file) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+
         Answer parentAnswer = answerRepository.findById(parentAnswerId)
                 .orElseThrow(() -> new RuntimeException("Parent Answer not found"));
+        String questionCreatorEmail = parentAnswer.getUser().getEmail();
+        Hibernate.initialize(parentAnswer.getUser());
+
 
         if (!parentAnswer.getQuestion().getId().equals(questionId)) {
             throw new RuntimeException("Parent Answer does not belong to the specified question");
@@ -294,6 +319,23 @@ dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toS
         response.setUser(user);
         response.setParentAnswer(parentAnswer);
         response.setCreatedAt(new Date());
+        if (file != null) {
+
+            String contentType = file.getContentType();
+
+            if (!contentType.equals("image/jpeg") && !contentType.equals("application/pdf") && !contentType.equals("text/csv")) {
+                throw new RuntimeException("Unsupported file type");
+            }
+
+            try {
+                response.setFile(file.getBytes()  );
+                response.setContentType(file.getContentType());
+            } catch (IOException e) {
+                throw new RuntimeException("Error reading file", e);
+            }
+        }
+
+
         AnswerResponse savedResponse = answerResponseRepository.save(response);
 
         Notification notification = new Notification();
@@ -303,14 +345,15 @@ dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toS
         notification.setCreatedAt(LocalDateTime.now());
 
         notificationRepository.save(notification);
-        sendNotificationEmail(parentAnswer.getUser(), "Une nouvelle réponse a été ajoutée à votre réponse de question");
+        sendNotificationEmail(questionCreatorEmail, "Une nouvelle réponse a été ajoutée à votre réponse de question");
 
 
         return savedResponse;
     }
-    private void sendNotificationEmail(User user, String content) {
+    @Transactional
+    public void sendNotificationEmail(String userEmail, String content) {
         SimpleMailMessage email = new SimpleMailMessage();
-        email.setTo(user.getEmail());
+        email.setTo(userEmail);
         email.setSubject("Notification");
         email.setText(content);
         mailSender.send(email);
@@ -337,7 +380,6 @@ dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toS
     @Override
     @Transactional
     public UserActivity getUserActivity() {
-        // Récupérer l'utilisateur connecté
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (principal instanceof UserDetails) {
@@ -345,23 +387,19 @@ dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toS
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            // Récupérer les questions, réponses et réponses aux réponses de l'utilisateur
             List<Question> questions = new ArrayList<>(user.getQuestions());
             List<Answer> answers = new ArrayList<>(user.getAnswers());
             List<AnswerResponse> answerResponses = answerResponseRepository.findByUser(user); // Fetch AnswerResponse objects for the user
 
-            // Convertir les objets en objets DTO
             List<QuestionDto> questionDtos = questions.stream().map(this::mapToDto).collect(Collectors.toList());
             List<AnswerDto> answerDtos = answers.stream().map(this::mapAnswerToDto).collect(Collectors.toList());
             List<AnswerResponseDto> answerResponseDtos = answerResponses.stream().map(this::mapToAnswerResponseDto).collect(Collectors.toList());
 
-            // Créer un UserActivity qui contient ces informations
             UserActivity userActivity = new UserActivity();
             userActivity.setQuestions(questionDtos);
             userActivity.setAnswers(answerDtos);
             userActivity.setAnswerResponses(answerResponseDtos);
 
-            // Retourner le UserActivity
             return userActivity;
         }
 
