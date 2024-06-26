@@ -13,7 +13,9 @@ public interface UserService {
     User getUserById(Long matricule);
     void deleteUser(Long matricule);
     User updateUser(User newUser, Long matricule);
-    void addBadgeToUser(Long userId, Badge badge);
+    void increaseReputation(Long userId);
+    void updateReputationUserId(Long reputationId, Long userId);
+    void checkAndUpdateBadge(User user);
     User getUserByUsername(String username);
     void updateUserRole(Long userId, String newRoleName);
 

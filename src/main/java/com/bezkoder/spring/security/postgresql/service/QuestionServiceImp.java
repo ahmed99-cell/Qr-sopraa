@@ -47,6 +47,8 @@ public class QuestionServiceImp implements QuestionService{
     private TagRepository tagRepository;
     @Autowired
     QuestionRepositoryCustom questionRepositoryCustom;
+    @Autowired
+private UserServiceImp userServiceImp;
 
 
     @Override
@@ -114,6 +116,7 @@ public class QuestionServiceImp implements QuestionService{
                     throw new RuntimeException("Error reading file", e);
                 }
             }
+        userServiceImp.increaseReputation(user.getMatricule());
 
             questionRepository.save(question);
 
@@ -138,7 +141,7 @@ public class QuestionServiceImp implements QuestionService{
         dto.setCreatedAt(question.getCreatedAt());
         dto.setUpdatedAt(question.getUpdatedAt());
 dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toSet()));
-        dto.setFile(question.getFile()); // Ajoutez cette ligne
+        dto.setFile(question.getFile());
         dto.setContentType(question.getContentType());
         dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toSet()));
 
@@ -284,6 +287,8 @@ dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toS
         }
 
         Answer savedAnswer = answerRepository.save(answer);
+        userServiceImp.increaseReputation(user.getMatricule());
+
 
         Notification notification = new Notification();
         notification.setUser(question.getUser());
@@ -337,6 +342,8 @@ dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toS
 
 
         AnswerResponse savedResponse = answerResponseRepository.save(response);
+        userServiceImp.increaseReputation(user.getMatricule());
+
 
         Notification notification = new Notification();
         notification.setUser(parentAnswer.getUser());
@@ -459,7 +466,6 @@ dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toS
         questionRepository.save(question);
     }
 
-    // Dissocier un tag d'une question
     public void dissociateTagFromQuestion(Long questionId, Long tagId) {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Question", "id", questionId));

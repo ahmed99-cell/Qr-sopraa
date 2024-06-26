@@ -35,7 +35,8 @@ public class Reputation {
         this.score = score;
     }
 
-    @OneToOne
+
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @JsonBackReference
     private User user;

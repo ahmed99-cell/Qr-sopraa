@@ -35,14 +35,14 @@ public class Badge {
         this.description = description;
     }
 
-    public String getIconUrl() {
+    public byte[] getIconUrl() {
         return iconUrl;
     }
 
-    public void setIconUrl(String iconUrl) {
+    public void setIconUrl(byte[] iconUrl) {
         this.iconUrl = iconUrl;
     }
 
-    private String iconUrl;
+    private byte [] iconUrl;
 
 }

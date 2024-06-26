@@ -63,7 +63,7 @@ public class User {
           inverseJoinColumns = @JoinColumn(name = "badge_id"))
   private Set<Badge> badges;
 
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @JsonManagedReference
   private Reputation reputation;
   @OneToMany(mappedBy = "user")
