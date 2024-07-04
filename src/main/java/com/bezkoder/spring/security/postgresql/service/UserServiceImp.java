@@ -33,6 +33,7 @@ public class UserServiceImp implements UserService{
 
 
     @Override
+    @Transactional
     public List<UserDto> getAllUsers() {
         List<User> users = userRepository.findAll();
         return users.stream()
@@ -53,6 +54,8 @@ public class UserServiceImp implements UserService{
     }
 
     @Override
+    @Transactional
+
     public User getUserById(Long matricule) {
         return userRepository.findById(matricule)
                 .orElseThrow(() -> new UserNotFoundException(matricule));

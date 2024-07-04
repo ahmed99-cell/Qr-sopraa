@@ -42,7 +42,7 @@ public class Answer {
 
     @Column(name = "content_type")
     private String contentType;
-    @OneToMany(mappedBy = "parentAnswer", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "parentAnswer", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<AnswerResponse> responses = new HashSet<>();
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     @Temporal(TemporalType.TIMESTAMP)
@@ -133,7 +133,8 @@ public class Answer {
         this.votes = votes;
     }
 
-    @OneToMany(mappedBy = "answer")
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "answer")
+    @JsonIgnore
     private Set<Vote> votes = new HashSet<>();
 
     public List<Favorite> getFavorites() {
@@ -144,6 +145,8 @@ public class Answer {
         this.favorites = favorites;
     }
 
-    @OneToMany(mappedBy = "answer")
+    @OneToMany(fetch = FetchType.EAGER,mappedBy = "answer")
+    @JsonIgnore
+    
     private List<Favorite> favorites;
 }

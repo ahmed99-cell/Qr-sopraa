@@ -195,6 +195,7 @@ dto.setTags(question.getTags().stream().map(Tag::getName).collect(Collectors.toS
     }
 
     @Override
+    @Transactional
     public Optional<GetQuestionByIdDto> getQuestionById(Long id) {
         return questionRepository.findById(id).map(this::maptoDto);
     }

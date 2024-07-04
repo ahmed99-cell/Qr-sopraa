@@ -169,5 +169,6 @@ public class Question {
     @Column(columnDefinition = "TEXT")
     private String content;
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private Set<Answer> answers = new HashSet<>();
 }

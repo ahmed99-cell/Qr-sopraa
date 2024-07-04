@@ -52,21 +52,25 @@ public class User {
   @Size(max = 120)
   private String password;
   @OneToMany(mappedBy = "sender")
+  @JsonIgnore
   private Set<Message> sentMessages = new HashSet<>();
 
   @OneToMany(mappedBy = "receiver")
+  @JsonIgnore
   private Set<Message> receivedMessages = new HashSet<>();
   @ManyToMany
   @JoinTable(
           name = "user_badges",
           joinColumns = @JoinColumn(name = "user_id"),
           inverseJoinColumns = @JoinColumn(name = "badge_id"))
+  @JsonIgnore
   private Set<Badge> badges;
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @JsonManagedReference
   private Reputation reputation;
   @OneToMany(mappedBy = "user")
+  @JsonIgnore
   private List<Notification> notifications;
 
   public Set<Vote> getVotes() {
@@ -78,6 +82,7 @@ public class User {
   }
 
   @OneToMany(mappedBy = "user")
+  @JsonIgnore
   private Set<Vote> votes = new HashSet<>();
 
   public List<Notification> getNotifications() {
@@ -90,6 +95,7 @@ public class User {
 
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+  @JsonIgnore
   private Set<Role> roles = new HashSet<>();
 
 
@@ -98,6 +104,7 @@ public class User {
   private Set<Question> questions = new HashSet<>();
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+  @JsonIgnore
   private Set<Answer> answers = new HashSet<>();
 
   public List<Favorite> getFavorites() {
@@ -109,6 +116,7 @@ public class User {
   }
 
   @OneToMany(mappedBy = "user")
+  @JsonIgnore
   private List<Favorite> favorites;
 
   public Set<Badge> getBadges() {
